@@ -16,28 +16,38 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: Ultron/package-lock.json
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install WebView2
+        run: |
+          $WebView2InstallPath = "$env:TEMP\MicrosoftEdgeWebview2Setup.exe"
+          Invoke-WebRequest "https://go.microsoft.com/fwlink/p/?linkid=2124701" -OutFile $WebView2InstallPath
+          Start-Process -FilePath $WebView2InstallPath -Args "/silent /install" -Wait
 
       - name: Install frontend dependencies
         run: npm ci
+        working-directory: Ultron
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli
 
       - name: Build app
         run: npx tauri build --bundles msi
+        working-directory: Ultron
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: Ultron-Installer
-          path: src-tauri/target/release/bundle/msi/*.msi
+          path: Ultron/src-tauri/target/release/bundle/msi/*.msi
 
       - name: Upload exe
         uses: actions/upload-artifact@v4
         with:
           name: Ultron-EXE
-          path: src-tauri/target/release/ultron.exe
+          path: Ultron/src-tauri/target/release/ultron.exe
