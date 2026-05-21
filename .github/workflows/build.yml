@@ -29,23 +29,21 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
-        working-directory: Ultron
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli
 
       - name: Build app
         run: npx tauri build --bundles msi
-        working-directory: Ultron
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: Ultron-Installer
-          path: Ultron/src-tauri/target/release/bundle/msi/*.msi
+          path: src-tauri/target/release/bundle/msi/*.msi
 
       - name: Upload exe
         uses: actions/upload-artifact@v4
         with:
           name: Ultron-EXE
-          path: Ultron/src-tauri/target/release/ultron.exe
+          path: src-tauri/target/release/ultron.exe
