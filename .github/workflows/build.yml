@@ -31,10 +31,21 @@ jobs:
         run: npm ci
 
       - name: Install Tauri CLI
+        shell: powershell
         run: npm install -g @tauri-apps/cli
 
+      - name: Check Tauri CLI
+        shell: powershell
+        run: |
+          where.exe tauri 2>&1
+          npx --help 2>&1 | head -5
+          npm list -g @tauri-apps/cli 2>&1
+
       - name: Build app
-        run: npx tauri build --bundles msi
+        shell: powershell
+        run: |
+          npx --yes @tauri-apps/cli build --bundles msi 2>&1
+          if (-not $?) { throw "Build failed with exit code $LASTEXITCODE" }
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
