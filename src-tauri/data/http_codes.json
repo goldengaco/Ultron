@@ -1,0 +1,13 @@
+[
+  {"code": 200, "name": "OK", "category": "2xx", "description": "Petición exitosa"},
+  {"code": 201, "name": "Created", "category": "2xx", "description": "Recurso creado exitosamente"},
+  {"code": 400, "name": "Bad Request", "category": "4xx", "description": "La petición es inválida"},
+  {"code": 401, "name": "Unauthorized", "category": "4xx", "description": "Autenticación requerida"},
+  {"code": 403, "name": "Forbidden", "category": "4xx", "description": "Sin permisos"},
+  {"code": 404, "name": "Not Found", "category": "4xx", "description": "Recurso no encontrado"},
+  {"code": 429, "name": "Too Many Requests", "category": "4xx", "description": "Rate limit excedido"},
+  {"code": 500, "name": "Internal Server Error", "category": "5xx", "description": "Error interno del servidor"},
+  {"code": 502, "name": "Bad Gateway", "category": "5xx", "description": "Gateway inválido"},
+  {"code": 503, "name": "Service Unavailable", "category": "5xx", "description": "Servicio no disponible"},
+  {"code": 504, "name": "Gateway Timeout", "category": "5xx", "description": "Gateway excedió timeout"}
+]

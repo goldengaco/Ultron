@@ -1,0 +1,43 @@
+name: Build Ultron
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Build app
+        run: npx tauri build --bundles msi
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ultron-Installer
+          path: src-tauri/target/release/bundle/msi/*.msi
+
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ultron-EXE
+          path: src-tauri/target/release/ultron.exe

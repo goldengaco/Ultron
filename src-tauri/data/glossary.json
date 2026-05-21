@@ -1,0 +1,9 @@
+[
+  {"term": "API Gateway", "category": "cloud", "definition": "Servicio intermediario entre clientes y backend", "providers": ["GCP Apigee", "AWS API Gateway", "Azure API Management"]},
+  {"term": "CIDR", "category": "network", "definition": "Classless Inter-Domain Routing - notación para rangos de IP", "providers": []},
+  {"term": "DNS", "category": "network", "definition": "Domain Name System - traduce dominios a IPs", "providers": ["GCP Cloud DNS", "AWS Route53", "Azure DNS"]},
+  {"term": "JWT", "category": "security", "definition": "JSON Web Token - claims firmadas", "providers": []},
+  {"term": "TLS", "category": "security", "definition": "Transport Layer Security - comunicaciones seguras", "providers": []},
+  {"term": "VPC", "category": "cloud", "definition": "Red virtual aislada en cloud", "providers": ["GCP VPC", "AWS VPC", "Azure VNet"]},
+  {"term": "IAM", "category": "cloud", "definition": "Identity and Access Management", "providers": ["GCP IAM", "AWS IAM", "Azure Entra ID"]}
+]

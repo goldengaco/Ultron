@@ -1,0 +1,10 @@
+[
+  {"port": 22, "protocol": "TCP", "service": "SSH", "description": "Secure Shell - acceso remoto seguro", "risk": "medium"},
+  {"port": 80, "protocol": "TCP", "service": "HTTP", "description": "Hypertext Transfer Protocol", "risk": "low"},
+  {"port": 443, "protocol": "TCP", "service": "HTTPS", "description": "HTTP sobre TLS", "risk": "low"},
+  {"port": 53, "protocol": "UDP", "service": "DNS", "description": "Domain Name System", "risk": "low"},
+  {"port": 3306, "protocol": "TCP", "service": "MySQL", "description": "Base de datos MySQL", "risk": "medium"},
+  {"port": 5432, "protocol": "TCP", "service": "PostgreSQL", "description": "Base de datos PostgreSQL", "risk": "medium"},
+  {"port": 6379, "protocol": "TCP", "service": "Redis", "description": "Caché en memoria", "risk": "medium"},
+  {"port": 9092, "protocol": "TCP", "service": "Kafka", "description": "Apache Kafka - mensajería distribuida", "risk": "medium"}
+]
