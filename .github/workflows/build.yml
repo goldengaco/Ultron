@@ -21,35 +21,19 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
-      - name: Install WebView2
-        run: |
-          $WebView2InstallPath = "$env:TEMP\MicrosoftEdgeWebview2Setup.exe"
-          Invoke-WebRequest "https://go.microsoft.com/fwlink/p/?linkid=2124701" -OutFile $WebView2InstallPath
-          Start-Process -FilePath $WebView2InstallPath -Args "/silent /install" -Wait
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> src-tauri/target"
 
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Install Tauri CLI
-        shell: powershell
-        run: npm install -g @tauri-apps/cli
-
       - name: Build frontend
-        shell: powershell
         run: npm run build
 
       - name: Build Tauri app
-        shell: powershell
-        run: |
-          $output = npx --yes @tauri-apps/cli build --bundles msi 2>&1
-          $exitCode = $LASTEXITCODE
-          Write-Host "=== BUILD OUTPUT ==="
-          Write-Host $output
-          Write-Host "=== END OUTPUT ==="
-          if ($exitCode -ne 0) {
-            foreach ($line in $output) { Write-Host "::error::$line" }
-            throw "Build failed"
-          }
+        run: npm run tauri build -- --bundles msi
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
