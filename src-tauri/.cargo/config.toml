@@ -1,13 +1,18 @@
 [target.x86_64-pc-windows-gnu]
 linker = "x86_64-w64-mingw32-gcc.exe"
 ar = "x86_64-w64-mingw32-gcc-ar.exe"
-rustflags = ["-C", "link-args=-static-libgcc -static-libstdc++ -static-libwinpthread"]
+rustflags = ["-C", "link-args=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic"]
 
 [build]
-jobs = 16
+jobs = 4
 
 [env]
-CFLAGS = "-Wa,-mbig-obj"
-CXXFLAGS = "-Wa,-mbig-obj"
+# Configuración específica para GNU (compilación local)
+CFLAGS_x86_64_pc_windows_gnu = "-Wa,-mbig-obj"
+CXXFLAGS_x86_64_pc_windows_gnu = "-Wa,-mbig-obj"
 CC_x86_64_pc_windows_gnu = "x86_64-w64-mingw32-gcc.exe"
 CXX_x86_64_pc_windows_gnu = "x86_64-w64-mingw32-g++.exe"
+
+# Configuración específica para MSVC (GitHub Actions)
+CFLAGS_x86_64_pc_windows_msvc = "/bigobj"
+CXXFLAGS_x86_64_pc_windows_msvc = "/bigobj"
