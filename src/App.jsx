@@ -9,17 +9,21 @@ import Topbar from './components/layout/Topbar';
 import CommandPalette from './components/layout/CommandPalette';
 import Dashboard from './components/home/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
+import ThemeManager from './lib/themeManager';
+import ThemePanel from './components/layout/ThemePanel';
 
 export default function App() {
   const [activeToolId, setActiveToolId] = useState(() => TOOLS[0]?.id ?? 'home');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [themePanelOpen, setThemePanelOpen] = useState(false);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const setFavorites = useAppStore((s) => s.setFavorites);
   const setRecentTools = useAppStore((s) => s.setRecentTools);
 
   useEffect(() => {
+    ThemeManager.init();
     commands.getFavorites().then(setFavorites).catch(() => {});
     commands.getRecentTools(10).then(setRecentTools).catch(() => {});
   }, []);
@@ -55,6 +59,14 @@ export default function App() {
       if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
         e.preventDefault();
         setIsSidebarOpen((p) => !p);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '1') {
+        e.preventDefault();
+        ThemeManager.cycleTheme(1);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '2') {
+        e.preventDefault();
+        ThemeManager.cycleTheme(-1);
       }
     };
     window.addEventListener('keydown', handleKey);
@@ -93,6 +105,8 @@ export default function App() {
           filteredTools={filteredTools}
           onSelectTool={handleSelectTool}
           onPaletteOpen={() => setPaletteOpen(true)}
+          onCycleTheme={() => ThemeManager.cycleTheme(1)}
+          onOpenThemePanel={() => setThemePanelOpen(true)}
         />
 
         <main style={{ flex: 1, overflowY: 'auto', padding: '32px 40px', background: 'var(--color-bg-primary)' }}>
@@ -124,6 +138,11 @@ export default function App() {
           onClose={() => setPaletteOpen(false)}
         />
       )}
+
+      <ThemePanel
+        isOpen={themePanelOpen}
+        onClose={() => setThemePanelOpen(false)}
+      />
 
       <style>{`
         @keyframes spin {

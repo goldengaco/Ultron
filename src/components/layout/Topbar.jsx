@@ -1,7 +1,32 @@
 import React from 'react';
-import { Search, Menu } from 'lucide-react';
+import { Search, Menu, Palette } from 'lucide-react';
 
-export default function Topbar({ activeTool, isSidebarOpen, onToggleSidebar, searchQuery, setSearchQuery, filteredTools, onSelectTool, onPaletteOpen }) {
+export default function Topbar({ 
+  activeTool, 
+  isSidebarOpen, 
+  onToggleSidebar, 
+  searchQuery, 
+  setSearchQuery, 
+  filteredTools, 
+  onSelectTool, 
+  onPaletteOpen, 
+  onCycleTheme, 
+  onOpenThemePanel 
+}) {
+  const clickTimeoutRef = React.useRef(null);
+
+  const handleThemeClick = (e) => {
+    if (e.detail === 1) {
+      clickTimeoutRef.current = setTimeout(() => {
+        onCycleTheme();
+      }, 250);
+    } else if (e.detail === 2) {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+      onOpenThemePanel();
+    }
+  };
   return (
     <header style={{
       height: '64px', background: 'var(--color-bg-primary)',
@@ -37,6 +62,31 @@ export default function Topbar({ activeTool, isSidebarOpen, onToggleSidebar, sea
             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{activeTool.category}</span>
           </div>
         )}
+        <button
+          onClick={handleThemeClick}
+          title="Click: Siguiente tema | Doble click: Panel de ajustes"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '32px', height: '32px', borderRadius: '8px',
+            border: '1px solid var(--color-border-default)',
+            background: 'var(--color-bg-secondary)',
+            color: 'var(--color-text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--color-accent)';
+            e.currentTarget.style.borderColor = 'var(--color-accent)';
+            e.currentTarget.style.boxShadow = '0 0 8px var(--color-accent-glow)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--color-text-muted)';
+            e.currentTarget.style.borderColor = 'var(--color-border-default)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          <Palette size={16} />
+        </button>
         <div style={{
           width: '32px', height: '32px', borderRadius: '50%',
           background: 'var(--color-accent)', display: 'flex',

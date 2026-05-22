@@ -28,6 +28,8 @@ pub struct HttpCode {
     pub name: String,
     pub category: String,
     pub description: String,
+    pub common_causes: Vec<String>,
+    pub troubleshooting: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -52,6 +54,7 @@ pub struct AppInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[allow(dead_code)]
 pub struct IpCache {
     pub ip: String,
     pub city: Option<String>,

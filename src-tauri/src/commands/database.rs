@@ -33,17 +33,21 @@ pub fn search_catalog(state: State<AppState>, query: String) -> Result<CatalogRe
 
     let http_codes = {
         let mut stmt = db.conn().prepare(
-            "SELECT code, name, category, description FROM http_codes
+            "SELECT code, name, category, description, CAST(common_causes AS VARCHAR), CAST(troubleshooting AS VARCHAR) FROM http_codes
              WHERE code::VARCHAR ILIKE ?1 OR name ILIKE ?1 OR description ILIKE ?1
              LIMIT 10"
         ).map_err(|e| e.to_string())?;
 
         let rows = stmt.query_map(duckdb::params![q], |row| {
+            let causes_str: String = row.get(4)?;
+            let troubleshooting_str: String = row.get(5)?;
             Ok(HttpCode {
                 code: row.get(0)?,
                 name: row.get(1)?,
                 category: row.get(2)?,
                 description: row.get(3)?,
+                common_causes: parse_duckdb_array(&causes_str),
+                troubleshooting: parse_duckdb_array(&troubleshooting_str),
             })
         }).map_err(|e| e.to_string())?;
 
@@ -137,15 +141,19 @@ pub fn get_http_code(state: State<AppState>, code: i32) -> Result<Option<HttpCod
     let db = state.db.lock().map_err(|e| format!("Lock error: {}", e))?;
 
     let mut stmt = db.conn().prepare(
-        "SELECT code, name, category, description FROM http_codes WHERE code = ?1"
+        "SELECT code, name, category, description, CAST(common_causes AS VARCHAR), CAST(troubleshooting AS VARCHAR) FROM http_codes WHERE code = ?1"
     ).map_err(|e| e.to_string())?;
 
     let result = stmt.query_row(duckdb::params![code], |row| {
+        let causes_str: String = row.get(4)?;
+        let troubleshooting_str: String = row.get(5)?;
         Ok(HttpCode {
             code: row.get(0)?,
             name: row.get(1)?,
             category: row.get(2)?,
             description: row.get(3)?,
+            common_causes: parse_duckdb_array(&causes_str),
+            troubleshooting: parse_duckdb_array(&troubleshooting_str),
         })
     });
 
@@ -178,4 +186,58 @@ pub fn get_glossary_entry(state: State<AppState>, term: String) -> Result<Vec<Gl
         results.push(row.map_err(|e| e.to_string())?);
     }
     Ok(results)
+}
+
+#[tauri::command]
+pub fn get_all_http_codes(state: State<AppState>) -> Result<Vec<HttpCode>, String> {
+    let db = state.db.lock().map_err(|e| format!("Lock error: {}", e))?;
+
+    let mut stmt = db.conn().prepare(
+        "SELECT code, name, category, description, CAST(common_causes AS VARCHAR), CAST(troubleshooting AS VARCHAR) FROM http_codes ORDER BY code"
+    ).map_err(|e| e.to_string())?;
+
+    let rows = stmt.query_map([], |row| {
+        let causes_str: String = row.get(4)?;
+        let troubleshooting_str: String = row.get(5)?;
+        Ok(HttpCode {
+            code: row.get(0)?,
+            name: row.get(1)?,
+            category: row.get(2)?,
+            description: row.get(3)?,
+            common_causes: parse_duckdb_array(&causes_str),
+            troubleshooting: parse_duckdb_array(&troubleshooting_str),
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(results)
+}
+
+fn parse_duckdb_array(s: &str) -> Vec<String> {
+    let s = s.trim();
+    if s.starts_with('[') && s.ends_with(']') {
+        let content = &s[1..s.len()-1];
+        if content.is_empty() {
+            return Vec::new();
+        }
+        content.split(',')
+            .map(|item| {
+                let item = item.trim();
+                if item.starts_with('\'') && item.ends_with('\'') {
+                    item[1..item.len()-1].replace("''", "'")
+                } else {
+                    item.to_string()
+                }
+            })
+            .collect()
+    } else {
+        if s.is_empty() {
+            Vec::new()
+        } else {
+            vec![s.to_string()]
+        }
+    }
 }

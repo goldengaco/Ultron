@@ -1,28 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
-
-const HTTP_CODES = [
-  { code: 100, name: 'Continue', category: '1xx', desc: 'El servidor ha recibido los headers y el cliente debe continuar.' },
-  { code: 101, name: 'Switching Protocols', category: '1xx', desc: 'El servidor acepta cambiar de protocolo.' },
-  { code: 200, name: 'OK', category: '2xx', desc: 'Petición exitosa.' },
-  { code: 201, name: 'Created', category: '2xx', desc: 'Recurso creado exitosamente.' },
-  { code: 204, name: 'No Content', category: '2xx', desc: 'Petición exitosa sin contenido.' },
-  { code: 301, name: 'Moved Permanently', category: '3xx', desc: 'El recurso fue movido permanentemente.' },
-  { code: 302, name: 'Found', category: '3xx', desc: 'Redirección temporal.' },
-  { code: 304, name: 'Not Modified', category: '3xx', desc: 'Recurso no modificado.' },
-  { code: 400, name: 'Bad Request', category: '4xx', desc: 'La petición es inválida.' },
-  { code: 401, name: 'Unauthorized', category: '4xx', desc: 'Autenticación requerida.' },
-  { code: 403, name: 'Forbidden', category: '4xx', desc: 'Sin permisos para el recurso.' },
-  { code: 404, name: 'Not Found', category: '4xx', desc: 'El recurso no existe.' },
-  { code: 405, name: 'Method Not Allowed', category: '4xx', desc: 'Método HTTP no permitido.' },
-  { code: 408, name: 'Request Timeout', category: '4xx', desc: 'La petición excedió el tiempo de espera.' },
-  { code: 409, name: 'Conflict', category: '4xx', desc: 'Conflicto con el estado actual.' },
-  { code: 429, name: 'Too Many Requests', category: '4xx', desc: 'Rate limit excedido.' },
-  { code: 500, name: 'Internal Server Error', category: '5xx', desc: 'Error interno del servidor.' },
-  { code: 502, name: 'Bad Gateway', category: '5xx', desc: 'El gateway recibió respuesta inválida.' },
-  { code: 503, name: 'Service Unavailable', category: '5xx', desc: 'Servicio no disponible temporalmente.' },
-  { code: 504, name: 'Gateway Timeout', category: '5xx', desc: 'El gateway excedió el tiempo de espera.' },
-];
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, AlertCircle, Wrench } from 'lucide-react';
+import { commands } from '../lib/tauri';
 
 const CATEGORIES = [
   { key: '1xx', label: 'Informativos', color: '#3b82f6' },
@@ -35,49 +13,158 @@ const CATEGORIES = [
 export default function HttpCodes() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
+  const [httpCodes, setHttpCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    commands.getAllHttpCodes()
+      .then((data) => {
+        setHttpCodes(data || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load HTTP codes:', err);
+        setLoading(false);
+      });
+  }, []);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return HTTP_CODES;
+    if (!query.trim()) return httpCodes;
     const q = query.toLowerCase();
-    return HTTP_CODES.filter((c) => c.code.toString().includes(q) || c.name.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
-  }, [query]);
+    return httpCodes.filter((c) => 
+      c.code.toString().includes(q) || 
+      c.name.toLowerCase().includes(q) || 
+      (c.description || c.desc || '').toLowerCase().includes(q)
+    );
+  }, [query, httpCodes]);
 
   const grouped = useMemo(() => {
     const map = new Map();
     CATEGORIES.forEach((cat) => map.set(cat.key, []));
-    filtered.forEach((c) => { if (map.has(c.category)) map.get(c.category).push(c); });
-    return CATEGORIES.filter((cat) => map.get(cat.key).length > 0).map((cat) => ({ ...cat, codes: map.get(cat.key) }));
+    filtered.forEach((c) => { 
+      if (map.has(c.category)) map.get(c.category).push(c); 
+    });
+    return CATEGORIES.filter((cat) => map.get(cat.key).length > 0).map((cat) => ({ 
+      ...cat, 
+      codes: map.get(cat.key) 
+    }));
   }, [filtered]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-fadeIn">
-      <div className="flex items-center gap-2.5 px-4 h-11 rounded-xl border border-border-default transition-all focus-within:border-accent/40 focus-within:shadow-[0_0_16px_rgba(59,130,246,0.08)]" style={{ background: 'linear-gradient(180deg, #141b2b, #11161e)' }}>
+      {/* Search Bar */}
+      <div className="flex items-center gap-2.5 px-4 h-11 rounded-xl border border-border-default bg-bg-secondary/40 transition-all focus-within:border-accent/40 focus-within:shadow-[0_0_16px_var(--bg-elevated)]">
         <Search size={16} className="text-text-muted shrink-0" />
-        <input type="text" placeholder="Buscar por código o nombre (ej: 404, not found)..." value={query} onChange={(e) => setQuery(e.target.value)} className="flex-1 bg-transparent text-text-primary placeholder-text-muted/60 font-medium" />
+        <input 
+          type="text" 
+          placeholder="Buscar por código o nombre (ej: 404, not found)..." 
+          value={query} 
+          onChange={(e) => setQuery(e.target.value)} 
+          className="flex-1 bg-transparent text-text-primary placeholder-text-muted/60 font-medium" 
+        />
       </div>
 
-      {grouped.map((group) => (
-        <div key={group.key}>
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-1 h-5 rounded-full" style={{ background: group.color }} />
-            <span className="text-sm font-semibold text-text-primary">{group.label}</span>
-            <span className="text-xs text-text-muted">({group.codes.length})</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {group.codes.map((c) => (
-              <div key={c.code} className="p-3.5 rounded-xl border border-border-default transition-all duration-150 cursor-pointer" style={{ background: 'linear-gradient(180deg, #141b2b, #11161e)' }} onClick={() => setSelected(selected?.code === c.code ? null : c)} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${group.color}40`; e.currentTarget.style.boxShadow = `0 2px 12px ${group.color}10`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border-default)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                <div className="flex items-center gap-3">
-                  <span className="text-xl font-bold font-mono shrink-0" style={{ color: group.color }}>{c.code}</span>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-text-primary">{c.name}</div>
-                    {selected?.code === c.code && <div className="text-xs text-text-muted mt-1.5 leading-relaxed">{c.desc}</div>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {loading ? (
+        <div className="flex items-center justify-center gap-2 py-12 text-text-muted text-sm bg-bg-secondary/10 border border-border-default/40 rounded-xl">
+          <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" /> 
+          Cargando códigos HTTP...
         </div>
-      ))}
+      ) : grouped.length === 0 ? (
+        <div className="py-12 text-center text-text-muted bg-bg-secondary/10 border border-border-default/40 rounded-xl">
+          No se encontraron códigos HTTP que coincidan con la búsqueda.
+        </div>
+      ) : (
+        grouped.map((group) => (
+          <div key={group.key}>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-1 h-5 rounded-full" style={{ background: group.color }} />
+              <span className="text-sm font-semibold text-text-primary">{group.label}</span>
+              <span className="text-xs text-text-muted">({group.codes.length})</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {group.codes.map((c) => {
+                const isSelected = selected?.code === c.code;
+                return (
+                  <div 
+                    key={c.code} 
+                    className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer ${
+                      isSelected 
+                        ? 'sm:col-span-2 border-accent bg-bg-surface shadow-[0_4px_24px_rgba(0,0,0,0.25)]' 
+                        : 'border-border-default bg-bg-secondary/30 hover:bg-bg-surface/50 hover:border-accent-hover/30'
+                    }`} 
+                    onClick={() => setSelected(isSelected ? null : c)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <span className="text-xl font-bold font-mono shrink-0 mt-0.5" style={{ color: group.color }}>
+                        {c.code}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-text-primary">{c.name}</span>
+                          {!isSelected && (
+                            <span className="text-[10px] text-text-muted bg-bg-primary/30 px-1.5 py-0.5 rounded font-mono">
+                              Detalles
+                            </span>
+                          )}
+                        </div>
+                        
+                        {!isSelected && (
+                          <div className="text-xs text-text-secondary mt-1 line-clamp-1">
+                            {c.description || c.desc}
+                          </div>
+                        )}
+                        
+                        {isSelected && (
+                          <div className="text-xs mt-3.5 pt-3.5 border-t border-border-default/30 space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 leading-relaxed animate-fadeIn">
+                            <div className="space-y-3">
+                              <div>
+                                <span className="font-semibold text-text-secondary block mb-1 text-[10px] uppercase tracking-wider">
+                                  Descripción:
+                                </span>
+                                <p className="text-text-primary bg-bg-primary/40 p-2.5 rounded-lg border border-border-default/20">
+                                  {c.description || c.desc}
+                                </p>
+                              </div>
+                              
+                              {c.common_causes && c.common_causes.length > 0 && c.common_causes[0] !== 'N/A' && (
+                                <div>
+                                  <span className="font-semibold text-text-secondary flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-wider">
+                                    <AlertCircle size={12} className="text-error" /> Causas Comunes:
+                                  </span>
+                                  <ul className="list-disc list-inside pl-1 text-text-primary/90 space-y-1 bg-bg-primary/40 p-2.5 rounded-lg border border-border-default/20">
+                                    {c.common_causes.map((cause, i) => (
+                                      <li key={i} className="pl-1 text-text-primary/90">{cause}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-3">
+                              {c.troubleshooting && c.troubleshooting.length > 0 && c.troubleshooting[0] !== 'N/A' && (
+                                <div>
+                                  <span className="font-semibold text-text-secondary flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-wider">
+                                    <Wrench size={12} className="text-success" /> Solución / Troubleshooting:
+                                  </span>
+                                  <ul className="list-disc list-inside pl-1 text-text-primary/90 space-y-1 bg-bg-primary/40 p-2.5 rounded-lg border border-border-default/20">
+                                    {c.troubleshooting.map((step, i) => (
+                                      <li key={i} className="pl-1 text-text-primary/90">{step}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }

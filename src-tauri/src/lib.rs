@@ -23,6 +23,7 @@ pub fn run() {
             commands::database::get_port_info,
             commands::database::search_ports,
             commands::database::get_http_code,
+            commands::database::get_all_http_codes,
             commands::database::get_glossary_entry,
             commands::favorites::add_favorite,
             commands::favorites::remove_favorite,
